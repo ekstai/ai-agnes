@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Linux 环境（轻量版）",
+    "description": "轻量 Linux 命令行环境（系统默认 WSL）：自带 MCP（linux_exec/文件读写），agnes 直接操控。需要 WSL + Node.js。",
+    "version": "1.2.0",
+    "icon": "Terminal",
+    "category": "tool",
+    "author": "Vyrxzulqen",
+    "path": "plugins/linux-lite"
+  },
+  {
+    "name": "Linux 环境（完整沙盒）",
+    "description": "完整 Linux 沙盒：整个 Ubuntu 系统下载到软件专属目录执行，自带 MCP（linux_exec/文件读写），agnes 直接操控。需要 WSL2 + Node.js。",
+    "version": "1.2.0",
+    "icon": "Server",
+    "category": "tool",
+    "author": "Vyrxzulqen",
+    "path": "plugins/linux-sandbox"
+  }
+]

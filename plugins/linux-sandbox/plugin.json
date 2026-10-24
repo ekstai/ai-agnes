@@ -1,0 +1,75 @@
+{
+  "pluginKey": "linux-sandbox",
+  "name": "Linux 环境（完整沙盒）",
+  "version": "1.2.0",
+  "description": "完整 Linux 系统沙盒：整个 Ubuntu 系统下载到软件专属目录（%APPDATA%/agnes-chat-app/sandbox/linux）作为沙盒并执行命令；自带 MCP 服务器（linux_exec / 文件读写等 4 个工具），安装后 agnes 可直接操控 Linux 系统。需要 WSL2 + 虚拟化。",
+  "category": "tool",
+  "icon": "Server",
+  "author": "Vyrxzulqen",
+  "origin": "auth",
+  "platforms": [
+    "desktop"
+  ],
+  "requirements": [
+    "WSL2 + 虚拟化",
+    "Node.js（运行自带 MCP 服务器）",
+    "网络（首次拉取约 600MB Ubuntu 官方镜像）"
+  ],
+  "mcp": {
+    "serverName": "agnes-linux",
+    "transport": "stdio",
+    "protocol": {
+      "version": "2024-11-05",
+      "framing": "换行分隔 JSON-RPC 2.0（每行一条消息）",
+      "methods": [
+        "initialize",
+        "notifications/initialized",
+        "tools/list",
+        "tools/call"
+      ],
+      "capabilities": {
+        "tools": {}
+      }
+    },
+    "command": "node",
+    "script": "main.js",
+    "env": {
+      "AGNES_LINUX_MODE": "sandbox",
+      "AGNES_SANDBOX_DISTRO": "agnes-sandbox"
+    },
+    "autoStart": true,
+    "startupTimeoutMs": 20000,
+    "toolCallTimeoutMs": 60000,
+    "tools": [
+      "linux_exec",
+      "linux_fs_list",
+      "linux_fs_read",
+      "linux_fs_write"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.2.0",
+      "date": "2026-10-24",
+      "notes": [
+        "自带 MCP 服务器（stdio，协议 2024-11-05）：linux_exec / linux_fs_list / linux_fs_read / linux_fs_write",
+        "整个 Ubuntu 系统下载到软件专属目录 %APPDATA%/agnes-chat-app/sandbox/linux 作为沙盒，与主系统完全隔离",
+        "MCP 配置含完整协议说明（版本/传输/方法/能力/超时），安装后 agnes 直接操控"
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-10-24",
+      "notes": [
+        "发行版改由 Ubuntu 官方云镜像拉取（cloud-images.ubuntu.com/wsl）"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-10-20",
+      "notes": [
+        "初始版本：完整 Linux 沙盒"
+      ]
+    }
+  ]
+}

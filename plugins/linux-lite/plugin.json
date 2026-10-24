@@ -1,0 +1,65 @@
+{
+  "pluginKey": "linux-lite",
+  "name": "Linux 环境（轻量版）",
+  "version": "1.2.0",
+  "description": "轻量 Linux 命令行环境（使用系统默认 WSL 发行版，不额外下载系统）：自带 MCP 服务器（linux_exec / 文件读写等 4 个工具），安装后 agnes 可直接在 Linux 中执行命令与读写文件。需要 WSL。",
+  "category": "tool",
+  "icon": "Terminal",
+  "author": "Vyrxzulqen",
+  "origin": "auth",
+  "platforms": [
+    "desktop"
+  ],
+  "requirements": [
+    "WSL",
+    "Node.js（运行自带 MCP 服务器）"
+  ],
+  "mcp": {
+    "serverName": "agnes-linux",
+    "transport": "stdio",
+    "protocol": {
+      "version": "2024-11-05",
+      "framing": "换行分隔 JSON-RPC 2.0（每行一条消息）",
+      "methods": [
+        "initialize",
+        "notifications/initialized",
+        "tools/list",
+        "tools/call"
+      ],
+      "capabilities": {
+        "tools": {}
+      }
+    },
+    "command": "node",
+    "script": "main.js",
+    "env": {
+      "AGNES_LINUX_MODE": "lite"
+    },
+    "autoStart": true,
+    "startupTimeoutMs": 20000,
+    "toolCallTimeoutMs": 60000,
+    "tools": [
+      "linux_exec",
+      "linux_fs_list",
+      "linux_fs_read",
+      "linux_fs_write"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.2.0",
+      "date": "2026-10-24",
+      "notes": [
+        "自带 MCP 服务器（stdio，协议 2024-11-05）：linux_exec / linux_fs_list / linux_fs_read / linux_fs_write",
+        "使用系统默认 WSL 发行版，不额外下载系统"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-10-20",
+      "notes": [
+        "初始版本：WSL2 轻量 Linux 命令行环境"
+      ]
+    }
+  ]
+}
