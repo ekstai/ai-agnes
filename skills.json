@@ -16,5 +16,14 @@
     "category": "tool",
     "author": "Vyrxzulqen",
     "path": "plugins/linux-sandbox"
+  },
+  {
+    "name": "账号中心（登录/注册）",
+    "description": "个人插件：账号体系（登录/注册）界面，提供完整的注册/登录表单与校验，运行在隔离沙箱中，经插件白名单桥接调用真实账号接口。",
+    "version": "0.2.0",
+    "icon": "Database",
+    "category": "tool",
+    "author": "个人插件（非官方）",
+    "path": "plugins/account-center"
   }
 ]
