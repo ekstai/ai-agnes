@@ -1,13 +1,13 @@
 {
-  "name": "图层分离",
+  "name": "图片元素编辑器",
   "slug": "layer-split",
-  "description": "把图片按颜色/透明度/边缘分离成多个透明图层，把 PPTX/DOCX/XLSX 拆解成内嵌图片与逐页文本，从 PDF 提取内嵌图片；全部在本机浏览器内处理，不上传文件，支持打包下载 ZIP。",
+  "description": "把图片当画布，在上面叠加文本/图片/矩形/圆形；每个元素可自由缩放、移动(X/Y)、旋转(Z轴)、倾斜(X/Y轴)、调整Z层级、改内容与颜色；支持撤销重做、工程保存、导出合成PNG。全部本机处理。",
   "category": "tool",
   "icon": "Layers",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "Vyrxzulqen",
-  "keywords": ["图层", "分离", "抠图", "PPT", "文档", "PDF", "拆解", "layer"],
+  "keywords": ["图片编辑", "元素", "文本", "缩放", "移动", "旋转", "图层", "canvas", "editor"],
   "uiHtml": "index.html",
   "entry": "README.md",
-  "capabilities": ["ui.layerSplit"]
+  "capabilities": ["ui.imageEditor"]
 }
