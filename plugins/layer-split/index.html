@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>图层分离 · Layer Split</title>
+<style>
+  :root{--bg:#f4f7fb;--card:#fff;--fg:#182230;--muted:#67748a;--line:#dfe6f0;--brand:#1f9bd8;--brand2:#1279ad;--ok:#1aa97a;--warn:#e08b21;--danger:#e05252;--shadow:0 4px 20px rgba(30,60,110,.08)}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,'Segoe UI','PingFang SC',system-ui,sans-serif;background:linear-gradient(150deg,#eef6fd,#f7f9fd 60%,#fdf6ef);color:var(--fg);font-size:13px;min-height:100vh}
+  .wrap{max-width:860px;margin:0 auto;padding:20px 18px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#25b6e8,#0f7fc0);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+  .logo svg{width:22px;height:22px}
+  h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:12px;margin:2px 0 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;margin-top:16px}
+  .tabs{display:flex;gap:6px;background:#eef3fa;padding:4px;border-radius:12px;margin-bottom:16px}
+  .tab{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:.18s}
+  .tab.on{background:#fff;color:var(--brand2);box-shadow:0 2px 8px rgba(20,80,140,.1)}
+  .drop{border:2px dashed #b9d3e8;border-radius:14px;padding:30px 16px;text-align:center;background:#f8fcff;cursor:pointer;transition:.18s}
+  .drop:hover,.drop.over{border-color:var(--brand);background:#eef9ff}
+  .drop svg{width:38px;height:38px;color:var(--brand);opacity:.75}
+  .drop b{display:block;margin:8px 0 3px;font-size:14px}
+  .drop span{color:var(--muted);font-size:12px}
+  input[type=file]{display:none}
+  .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0}
+  label.f{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--fg);font-weight:600}
+  input[type=range]{width:150px;accent-color:var(--brand)}
+  select,input[type=number]{border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;background:#fff;color:var(--fg)}
+  .btn{border:0;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:.18s;background:var(--brand);color:#fff}
+  .btn:hover{background:var(--brand2)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.ghost{background:#eef3fa;color:var(--brand2)}
+  .btn.ok{background:var(--ok)}
+  .hint{color:var(--muted);font-size:11.5px;line-height:1.6;margin-top:8px}
+  .status{font-size:12px;color:var(--muted);min-height:18px;margin-top:10px}
+  .status.err{color:var(--danger)}
+  .status.ok{color:var(--ok)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px}
+  .layer{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative;transition:.18s}
+  .layer:hover{box-shadow:0 6px 18px rgba(30,60,110,.12);transform:translateY(-2px)}
+  .layer canvas,.layer img{width:100%;height:120px;object-fit:contain;display:block;background:repeating-conic-gradient(#eef2f7 0% 25%,#fff 0% 50%) 50%/16px 16px}
+  .layer .meta{padding:8px 10px;border-top:1px solid var(--line)}
+  .layer .meta b{font-size:12px;display:block}
+  .layer .meta small{color:var(--muted);font-size:11px}
+  .layer .dl{position:absolute;top:6px;right:6px;background:rgba(20,120,180,.9);color:#fff;border:0;border-radius:7px;padding:4px 8px;font-size:11px;cursor:pointer}
+  .list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .item .ic{width:34px;height:34px;border-radius:8px;background:#eef6fd;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .item .tx{flex:1;min-width:0}
+  .item .tx b{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .tx small{color:var(--muted);font-size:11px}
+  .item .mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 9px;font-size:11px;cursor:pointer;color:var(--brand2)}
+  .empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:12px}
+  .progress{height:5px;background:#eef3fa;border-radius:3px;overflow:hidden;margin-top:10px;display:none}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--ok));width:0;transition:width .2s}
+  .tag{display:inline-block;background:#eef6fd;color:var(--brand2);border-radius:6px;padding:2px 7px;font-size:10.5px;margin:0 4px 4px 0}
+  code{background:#f0f4fa;padding:1px 5px;border-radius:4px;font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5M3 17l9 5 9-5"/></svg></div>
+    <div><h1>图层分离</h1><p class="sub">把图片分层、把文档/PPT 拆成独立元素 · 本地处理，不上传</p></div>
+  </header>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab on" data-mode="image">🖼 图片分层</button>
+      <button class="tab" data-mode="doc">📄 文档拆解</button>
+      <button class="tab" data-mode="pdf">📕 PDF 提取</button>
+    </div>
+
+    <div class="drop" id="drop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <b id="dropTitle">点击或拖入图片</b>
+      <span id="dropHint">支持 PNG / JPG / WebP / GIF / BMP</span>
+    </div>
+    <input type="file" id="file" />
+    <div class="progress" id="prog"><i id="progBar"></i></div>
+    <div class="status" id="status"></div>
+
+    <div id="imgOpts" class="row">
+      <label class="f">分层数 <input type="range" id="levels" min="2" max="8" value="4" /><b id="levelsVal">4</b></label>
+      <label class="f">算法 <select id="algo"><option value="color">颜色量化</option><option value="alpha">透明度分层</option><option value="edge">边缘/线条</option></select></label>
+      <button class="btn" id="splitBtn" disabled>开始分离</button>
+      <button class="btn ghost" id="exportZipBtn" disabled>打包下载 ZIP</button>
+    </div>
+
+    <div id="docOpts" class="row" style="display:none">
+      <span class="tag">PPTX / DOCX / XLSX</span>
+      <span class="tag">提取内嵌图片</span>
+      <span class="tag">提取文本</span>
+      <button class="btn" id="parseBtn" disabled>开始拆解</button>
+      <button class="btn ghost" id="exportDocZipBtn" disabled>打包下载 ZIP</button>
+    </div>
+
+    <div id="pdfOpts" class="row" style="display:none">
+      <span class="tag">提取 PDF 内嵌图片</span>
+      <button class="btn" id="pdfBtn" disabled>开始提取</button>
+      <button class="btn ghost" id="exportPdfZipBtn" disabled>打包下载 ZIP</button>
+    </div>
+
+    <div class="hint" id="modeHint"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;margin-bottom:4px">分离结果</div>
+    <div class="status" id="resultStatus">尚未处理文件</div>
+    <div class="grid" id="layerGrid"></div>
+    <div class="list" id="fileList"></div>
+    <div class="empty" id="emptyHint">选择文件后，结果会显示在这里</div>
+  </div>
+</div>
+
+<script>
+/* ===================== 图层分离核心引擎（单文件，无外部依赖） ===================== */
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var state={mode:'image',file:null,layers:[],files:[],busy:false};
+var MODE_HINT={
+  image:'图片分层：把一张图按颜色/透明度/边缘拆成多个透明图层，每层可单独下载。全部在本机浏览器内完成。',
+  doc:'文档拆解：解析 PPTX/DOCX/XLSX（本质是 ZIP+XML），把内嵌图片、每页/每张幻灯片文本分离成独立文件。',
+  pdf:'PDF 提取：扫描 PDF 二进制流，提取内嵌的 JPEG/PNG 图片并单独导出。加密或压缩流可能跳过。'
+};
+
+function setStatus(msg,type){var s=$('status');s.textContent=msg||'';s.className='status'+(type?' '+type:'')}
+function setResult(msg){$('resultStatus').textContent=msg||'';$('emptyHint').style.display=msg?'none':'block'}
+function prog(p){$('prog').style.display=p>=0&&p<100?'block':'none';$('progBar').style.width=(p||0)+'%'}
+function nextTick(){return new Promise(function(r){setTimeout(r,0)})}
+
+/* ---------- ZIP 解压：读 central directory + deflate-raw ---------- */
+function u16(d,o){return d.getUint16(o,true)}
+function u32(d,o){return d.getUint32(o,true)}
+async function unzip(arrayBuf){
+  var dv=new DataView(arrayBuf),len=arrayBuf.byteLength,eocd=-1;
+  for(var i=len-22;i>=Math.max(0,len-66000);i--){if(u32(dv,i)===0x06054b50){eocd=i;break}}
+  if(eocd<0)throw new Error('不是有效的 ZIP 文件');
+  var n=u16(dv,eocd+10),off=u32(dv,eocd+16),entries=[];
+  for(var k=0;k<n;k++){
+    var p=off;
+    if(u32(dv,p)!==0x02014b50){off+=46+u16(dv,p+28)+u16(dv,p+30)+u16(dv,p+32);continue}
+    var method=u16(dv,p+10),csize=u32(dv,p+20),usize=u32(dv,p+24);
+    var nl=u16(dv,p+28),el=u16(dv,p+30),cl=u16(dv,p+32);
+    var name=new TextDecoder().decode(new Uint8Array(arrayBuf,p+46,nl));
+    var lho=u32(dv,p+42),lnl=u16(dv,lho+26),lel=u16(dv,lho+28);
+    var dstart=lho+30+lnl+lel;
+    var comp=new Uint8Array(arrayBuf,dstart,csize);
+    var data;
+    if(method===0)data=comp;
+    else if(method===8){
+      var ds=new DecompressionStream('deflate-raw');
+      data=new Uint8Array(await new Response(new Blob([comp]).stream().pipeThrough(ds)).arrayBuffer());
+    } else continue;
+    if(!name.endsWith('/'))entries.push({name:name,data:data,size:usize});
+    off=p+46+nl+el+cl;
+  }
+  return entries;
+}
+
+/* ---------- ZIP 打包：stored（不压缩，兼容性最好）+ deflate-raw ---------- */
+function crc32(buf){var t=crc32.t;if(!t){t=crc32.t=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}}var c=0xFFFFFFFF;for(var i=0;i<buf.length;i++)c=t[(c^buf[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function dosTime(){var d=new Date();return {t:((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xffff,d:(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xffff}}
+async function zipFiles(items){
+  var enc=new TextEncoder(),parts=[],central=[],offset=0,tm=dosTime();
+  for(var it of items){
+    var nameB=enc.encode(it.name),dataB=it.data instanceof Uint8Array?it.data:enc.encode(String(it.data||''));
+    var crc=crc32(dataB),method=0,body=dataB;
+    // 大于 512B 的文本用 deflate 压缩减小体积
+    if(dataB.length>512&&/\.(txt|xml|svg|json|html|csv|md)$/i.test(it.name)){
+      var cs=new CompressionStream('deflate-raw');
+      body=new Uint8Array(await new Response(new Blob([dataB]).stream().pipeThrough(cs)).arrayBuffer());
+      method=8;
+    }
+    var lh=new Uint8Array(30+nameB.length),lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0,true);lv.setUint16(8,method,true);
+    lv.setUint16(10,tm.t,true);lv.setUint16(12,tm.d,true);lv.setUint32(14,crc,true);
+    lv.setUint32(18,body.length,true);lv.setUint32(22,dataB.length,true);lv.setUint16(26,nameB.length,true);lv.setUint16(28,0,true);
+    lh.set(nameB,30);parts.push(lh,body);
+    var ch=new Uint8Array(46+nameB.length),cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0,true);cv.setUint16(10,method,true);
+    cv.setUint16(12,tm.t,true);cv.setUint16(14,tm.d,true);cv.setUint32(16,crc,true);
+    cv.setUint32(20,body.length,true);cv.setUint32(24,dataB.length,true);cv.setUint16(28,nameB.length,true);
+    cv.setUint32(42,offset,true);ch.set(nameB,46);central.push(ch);
+    offset+=lh.length+body.length;
+  }
+  var centralSize=central.reduce(function(a,b){return a+b.length},0);
+  var end=new Uint8Array(22),ev=new DataView(end.buffer);
+  ev.setUint32(0,0x06054b50,true);ev.setUint16(8,items.length,true);ev.setUint16(10,items.length,true);
+  ev.setUint32(12,centralSize,true);ev.setUint32(16,offset,true);
+  return new Blob(parts.concat(central,[end]),{type:'application/zip'});
+}
+function download(blob,name){var a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},3000)}
+function safeName(s){return String(s||'file').replace(/[\\/:*?"<>|\r\n]+/g,'_').slice(0,80)}
+
+/* ===================== 图片分层 ===================== */
+async function splitImage(file,levels,algo){
+  var bmp=await createImageBitmap(file),w=bmp.width,h=bmp.height;
+  var c=document.createElement('canvas');c.width=w;c.height=h;
+  var ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(bmp,0,0);
+  var img=ctx.getImageData(0,0,w,h),d=img.data;
+  var out=[];
+  if(algo==='alpha'){
+    // 透明度分层：按 alpha 区间拆
+    var bands=levels,step=256/bands;
+    for(var b=0;b<bands;b++){
+      var lo=Math.floor(b*step),hi=Math.floor((b+1)*step);
+      var cc=document.createElement('canvas');cc.width=w;cc.height=h;
+      var cx=cc.getContext('2d'),od=cx.createImageData(w,h),dd=od.data;
+      for(var i=0;i<d.length;i+=4){
+        var a=d[i+3];
+        if(a>=lo&&a<hi){dd[i]=d[i];dd[i+1]=d[i+1];dd[i+2]=d[i+2];dd[i+3]=a}
+      }
+      cx.putImageData(od,0,0);
+      out.push({name:'透明度层 '+(b+1)+' (α '+lo+'-'+hi+')',canvas:cc});
+    }
+  } else if(algo==='edge'){
+    // 边缘/线条层：Sobel 简化，满足条件保留原色，否则透明
+    var lum=new Float32Array(w*h);
+    for(var p=0,q=0;p<d.length;p+=4,q++)lum[q]=0.299*d[p]+0.587*d[p+1]+0.114*d[p+2];
+    var layers=[{name:'原图底图',mode:'base'},{name:'边缘线条层',mode:'edge'},{name:'平坦区域层',mode:'flat'}].slice(0,Math.max(2,Math.min(3,levels)));
+    for(var L=0;L<layers.length;L++){
+      var cc=document.createElement('canvas');cc.width=w;cc.height=h;
+      var cx=cc.getContext('2d'),od=cx.createImageData(w,h),dd=od.data;
+      if(layers[L].mode==='base'){dd.set(d)}
+      else{
+        for(var y=1;y<h-1;y++)for(var x=1;x<w-1;x++){
+          var idx=y*w+x,p2=idx*4;
+          var gx=-lum[idx-w-1]+lum[idx-w+1]-2*lum[idx-1]+2*lum[idx+1]-lum[idx+w-1]+lum[idx+w+1];
+          var gy=-lum[idx-w-1]-2*lum[idx-w]-lum[idx-w+1]+lum[idx+w-1]+2*lum[idx+w]+lum[idx+w+1];
+          var mag=Math.sqrt(gx*gx+gy*gy)/4;
+          var keep=layers[L].mode==='edge'?mag>26:mag<=26;
+          if(keep){dd[p2]=d[p2];dd[p2+1]=d[p2+1];dd[p2+2]=d[p2+2];dd[p2+3]=d[p2+3]}
+        }
+      }
+      cx.putImageData(od,0,0);out.push({name:layers[L].name,canvas:cc});
+    }
+  } else {
+    // 颜色量化分层：中位切分，把像素按量化后色板分组
+    var palette=quantize(d,levels);
+    for(var b=0;b<palette.length;b++){
+      var cc=document.createElement('canvas');cc.width=w;cc.height=h;
+      var cx=cc.getContext('2d'),od=cx.createImageData(w,h),dd=od.data;
+      for(var i=0;i<d.length;i+=4){
+        if(d[i+3]===0)continue;
+        var best=0,bd=1e9;
+        for(var k=0;k<palette.length;k++){var dr=d[i]-palette[k][0],dg=d[i+1]-palette[k][1],db=d[i+2]-palette[k][2];var dist=dr*dr+dg*dg+db*db;if(dist<bd){bd=dist;best=k}}
+        if(best===b){dd[i]=d[i];dd[i+1]=d[i+1];dd[i+2]=d[i+2];dd[i+3]=d[i+3]}
+      }
+      cx.putImageData(od,0,0);
+      var col=palette[b];out.push({name:'图层 '+(b+1)+' · rgb('+col.join(',')+')',canvas:cc});
+    }
+  }
+  return {out:out,w:w,h:h};
+}
+function quantize(data,k){
+  // 采样 + 简单 k-means（小图全采样；大图按亮度排序后等距取样，均匀分布避免重复中心）
+  var pts=[];for(var i=0;i<data.length;i+=4*Math.max(1,Math.floor(data.length/4/4000))){if(data[i+3]>10)pts.push([data[i],data[i+1],data[i+2]])}
+  if(!pts.length)pts.push([128,128,128]);
+  // k-means++ 初始化：首个取中点，后续取离已有中心最远的点，避免中心塌缩
+  var cen=[pts[Math.floor(pts.length/2)]||[128,128,128]];
+  function dist2(p,c){var a=p[0]-c[0],b=p[1]-c[1],d=p[2]-c[2];return a*a+b*b+d*d}
+  while(cen.length<k){
+    var best=null,bestD=-1;
+    for(var n=0;n<pts.length;n++){
+      var minD=1e18;for(var c=0;c<cen.length;c++){var dd=dist2(pts[n],cen[c]);if(dd<minD)minD=dd}
+      if(minD>bestD){bestD=minD;best=pts[n]}
+    }
+    if(!best||bestD<1)break;
+    cen.push(best.slice());
+  }
+  while(cen.length<k)cen.push([Math.random()*255|0,Math.random()*255|0,Math.random()*255|0]);
+  for(var iter=0;iter<8;iter++){
+    var sum=[[],[],[]],cnt=new Array(k).fill(0);
+    for(var n=0;n<pts.length;n++){
+      var p=pts[n],best=0,bd=1e9;
+      for(var c=0;c<k;c++){var dr=p[0]-cen[c][0],dg=p[1]-cen[c][1],db=p[2]-cen[c][2],dd=dr*dr+dg*dg+db*db;if(dd<bd){bd=dd;best=c}}
+      cnt[best]++;sum[0][best]=(sum[0][best]||0)+p[0];sum[1][best]=(sum[1][best]||0)+p[1];sum[2][best]=(sum[2][best]||0)+p[2];
+    }
+    for(var c=0;c<k;c++)if(cnt[c])cen[c]=[Math.round(sum[0][c]/cnt[c]),Math.round(sum[1][c]/cnt[c]),Math.round(sum[2][c]/cnt[c])];
+  }
+  return cen;
+}
+
+/* ===================== 文档拆解 PPTX/DOCX/XLSX ===================== */
+function xmlText(xml){
+  try{
+    var doc=new DOMParser().parseFromString(xml,'application/xml');
+    var texts=[];
+    var walker=doc.createTreeWalker(doc,NodeFilter.SHOW_TEXT);var n;
+    while((n=walker.nextNode())){var t=n.textContent.trim();if(t)texts.push(t)}
+    // 按段落聚合（a:p / w:p 已由文本节点分隔，简单合并）
+    return texts;
+  }catch(e){return[]}
+}
+async function parseOffice(file){
+  var entries=await unzip(await file.arrayBuffer());
+  var out=[],isPpt=/\.pptx$/i.test(file.name),isDoc=/\.docx$/i.test(file.name),isXls=/\.xlsx$/i.test(file.name);
+  var mediaPref=isPpt?'ppt/media/':isDoc?'word/media/':'xl/media/';
+  var slidePref=isPpt?'ppt/slides/slide':'word/document.xml';
+  // 提取所有媒体文件
+  var medias=entries.filter(function(e){return e.name.indexOf(mediaPref)===0});
+  for(var m of medias){
+    var fn=m.name.split('/').pop();
+    out.push({name:'media/'+fn,data:m.data,desc:'内嵌媒体 · '+m.size+' B',kind:'media'});
+  }
+  // PPTX：每页文本
+  if(isPpt){
+    var slides=entries.filter(function(e){return /^ppt\/slides\/slide\d+\.xml$/.test(e.name)})
+      .sort(function(a,b){var na=+a.name.match(/slide(\d+)/)[1],nb=+b.name.match(/slide(\d+)/)[1];return na-nb});
+    for(var s of slides){
+      var txt=xmlText(new TextDecoder().decode(s.data)).join('\n');
+      var idx=s.name.match(/slide(\d+)/)[1];
+      out.push({name:'slides/第'+idx+'页.txt',data:txt||'(无文本)',desc:'第 '+idx+' 页文本',kind:'text'});
+    }
+  } else if(isDoc){
+    var d=entries.find(function(e){return e.name==='word/document.xml'});
+    if(d){var txt=xmlText(new TextDecoder().decode(d.data)).join('\n');out.push({name:'document.txt',data:txt||'(无文本)',desc:'文档全部文本',kind:'text'})}
+  } else if(isXls){
+    var ss=entries.find(function(e){return e.name==='xl/sharedStrings.xml'});
+    if(ss){var txt=xmlText(new TextDecoder().decode(ss.data)).join('\n');out.push({name:'sharedStrings.txt',data:txt||'(无文本)',desc:'表格所有文本',kind:'text'})}
+    var sheets=entries.filter(function(e){return /^xl\/worksheets\/sheet\d+\.xml$/.test(e.name)});
+    for(var sh of sheets){var t=xmlText(new TextDecoder().decode(sh.data)).join('\n');out.push({name:'sheets/'+sh.name.split('/').pop()+'.txt',data:t||'(无文本)',desc:'工作表文本',kind:'text'})}
+  }
+  return out;
+}
+
+/* ===================== PDF 内嵌图片提取 ===================== */
+async function parsePdf(file){
+  var buf=new Uint8Array(await file.arrayBuffer()),out=[],idx=0,n=0;
+  var enc=new TextDecoder('latin1');
+  // JPEG: FF D8 FF ... FF D9
+  for(var i=0;i<buf.length-3;i++){
+    if(buf[i]===0xFF&&buf[i+1]===0xD8&&buf[i+2]===0xFF){
+      var end=-1;for(var j=i+2;j<buf.length-1;j++){if(buf[j]===0xFF&&buf[j+1]===0xD9){end=j+2;break}}
+      if(end>i+100){out.push({name:'image-'+(++n)+'.jpg',data:buf.slice(i,end),desc:'JPEG · '+((end-i)/1024).toFixed(1)+' KB',kind:'media'});i=end}
+    }
+    // PNG: 89 50 4E 47 ... IEND
+    if(buf[i]===0x89&&buf[i+1]===0x50&&buf[i+2]===0x4E&&buf[i+3]===0x47){
+      var sig='IEND',found=-1;
+      for(var j=i;j<buf.length-8;j++){if(buf[j]===0x49&&buf[j+1]===0x45&&buf[j+2]===0x4E&&buf[j+3]===0x44){found=j+8;break}}
+      if(found>i+100){out.push({name:'image-'+(++n)+'.png',data:buf.slice(i,found),desc:'PNG · '+((found-i)/1024).toFixed(1)+' KB',kind:'media'});i=found}
+    }
+  }
+  return out;
+}
+
+/* ===================== UI 绑定 ===================== */
+function renderLayers(){
+  var grid=$('layerGrid'),list=$('fileList');grid.innerHTML='';list.innerHTML='';
+  if(state.layers.length){
+    setResult('已分离 '+state.layers.length+' 个图层');
+    state.layers.forEach(function(L,i){
+      var d=document.createElement('div');d.className='layer';
+      var url=L.canvas.toDataURL('image/png');
+      d.innerHTML='<img src="'+url+'" alt="layer"/><span class="dl" data-i="'+i+'">下载</span><div class="meta"><b>图层 '+(i+1)+'</b><small>'+escapeHtml(L.name)+'</small></div>';
+      grid.appendChild(d);
+    });
+    grid.querySelectorAll('.dl').forEach(function(b){b.onclick=function(){
+      var L=state.layers[+b.dataset.i];L.canvas.toBlob(function(bl){download(bl,safeName(state.file.name.replace(/\.[^.]+$/,''))+'-layer-'+( +b.dataset.i+1)+'.png')},'image/png')};
+    });
+  }
+  if(state.files.length){
+    setResult('已拆解 '+state.files.length+' 个元素');
+    state.files.forEach(function(F,i){
+      var d=document.createElement('div');d.className='item';
+      var icon=/media|\.(png|jpg|jpeg|webp|gif|bmp)$/i.test(F.name)?'🖼':'📄';
+      d.innerHTML='<div class="ic">'+icon+'</div><div class="tx"><b>'+escapeHtml(F.name)+'</b><small>'+escapeHtml(F.desc||'')+'</small></div><button class="mini" data-i="'+i+'">下载</button>';
+      list.appendChild(d);
+    });
+    list.querySelectorAll('.mini').forEach(function(b){b.onclick=function(){
+      var F=state.files[+b.dataset.i];var blob=F.data instanceof Uint8Array?new Blob([F.data]):new Blob([String(F.data)],{type:'text/plain;charset=utf-8'});download(blob,F.name)};
+    });
+  }
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function setMode(mode){
+  state.mode=mode;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.mode===mode)});
+  $('imgOpts').style.display=mode==='image'?'flex':'none';
+  $('docOpts').style.display=mode==='doc'?'flex':'none';
+  $('pdfOpts').style.display=mode==='pdf'?'flex':'none';
+  var cfg={image:['点击或拖入图片','支持 PNG / JPG / WebP / GIF / BMP'],doc:['点击或拖入文档','支持 PPTX / DOCX / XLSX'],pdf:['点击或拖入 PDF','提取内嵌图片（JPEG / PNG）']}[mode];
+  $('dropTitle').textContent=cfg[0];$('dropHint').textContent=cfg[1];
+  $('modeHint').textContent=MODE_HINT[mode];
+  state.file=null;state.layers=[];state.files=[];renderLayers();
+  $('splitBtn').disabled=$('parseBtn').disabled=$('pdfBtn').disabled=true;
+  $('exportZipBtn').disabled=$('exportDocZipBtn').disabled=$('exportPdfZipBtn').disabled=true;
+  setStatus('');$('file').value='';
+}
+function accept(file){
+  var ok=state.mode==='image'?/\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name)
+    :state.mode==='doc'?/\.(pptx|docx|xlsx)$/i.test(file.name)
+    :/\.pdf$/i.test(file.name);
+  if(!ok){setStatus('该文件格式与当前模式不匹配','err');return}
+  state.file=file;state.layers=[];state.files=[];renderLayers();
+  setStatus('已选择：'+file.name+'（'+(file.size/1024).toFixed(1)+' KB）','ok');
+  if(state.mode==='image')$('splitBtn').disabled=false;
+  else if(state.mode==='doc')$('parseBtn').disabled=false;
+  else $('pdfBtn').disabled=false;
+}
+async function doSplit(){
+  if(!state.file||state.busy)return;state.busy=true;
+  $('splitBtn').disabled=true;setStatus('正在分层…');prog(10);
+  try{
+    var r=await splitImage(state.file,+$('levels').value,$('algo').value);
+    state.layers=r.out;$('exportZipBtn').disabled=false;prog(100);
+    setStatus('分层完成：'+state.layers.length+' 层','ok');renderLayers();
+  }catch(e){setStatus('分层失败：'+e.message,'err');prog(-1)}
+  state.busy=false;$('splitBtn').disabled=false;
+}
+async function doParse(){
+  if(!state.file||state.busy)return;state.busy=true;
+  $('parseBtn').disabled=true;setStatus('正在拆解文档（解压 ZIP）…');prog(20);
+  try{state.files=await parseOffice(state.file);$('exportDocZipBtn').disabled=state.files.length===0;prog(100);
+    setStatus('拆解完成：'+state.files.length+' 个元素','ok');renderLayers();
+  }catch(e){setStatus('拆解失败：'+e.message,'err');prog(-1)}
+  state.busy=false;$('parseBtn').disabled=false;
+}
+async function doPdf(){
+  if(!state.file||state.busy)return;state.busy=true;
+  $('pdfBtn').disabled=true;setStatus('正在扫描 PDF 图片流…');prog(20);
+  try{state.files=await parsePdf(state.file);$('exportPdfZipBtn').disabled=state.files.length===0;prog(100);
+    setStatus(state.files.length?'提取完成：'+state.files.length+' 张图片':'未找到可提取的图片（可能被压缩/加密）',state.files.length?'ok':'');renderLayers();
+  }catch(e){setStatus('提取失败：'+e.message,'err');prog(-1)}
+  state.busy=false;$('pdfBtn').disabled=false;
+}
+async function exportZip(){
+  if(state.busy)return;state.busy=true;setStatus('正在打包…');
+  try{
+    var items=[];
+    if(state.layers.length){for(var i=0;i<state.layers.length;i++){
+      var bl=await new Promise(function(res){state.layers[i].canvas.toBlob(res,'image/png')});
+      items.push({name:'layer-'+(i+1)+'.png',data:new Uint8Array(await bl.arrayBuffer())});
+    }}
+    if(state.files.length){for(var f of state.files)items.push({name:f.name,data:f.data})}
+    var blob=await zipFiles(items);download(blob,safeName(state.file.name.replace(/\.[^.]+$/,''))+'-layers.zip');
+    setStatus('已打包 '+items.length+' 个文件','ok');
+  }catch(e){setStatus('打包失败：'+e.message,'err')}
+  state.busy=false;
+}
+
+/* 事件绑定 */
+document.querySelectorAll('.tab').forEach(function(t){t.onclick=function(){setMode(t.dataset.mode)}});
+$('drop').onclick=function(){$('file').click()};
+$('drop').ondragover=function(e){e.preventDefault();$('drop').classList.add('over')};
+$('drop').ondragleave=function(){$('drop').classList.remove('over')};
+$('drop').ondrop=function(e){e.preventDefault();$('drop').classList.remove('over');if(e.dataTransfer.files[0])accept(e.dataTransfer.files[0])};
+$('file').onchange=function(){if(this.files[0])accept(this.files[0])};
+$('levels').oninput=function(){$('levelsVal').textContent=this.value};
+$('splitBtn').onclick=doSplit;$('parseBtn').onclick=doParse;$('pdfBtn').onclick=doPdf;
+$('exportZipBtn').onclick=exportZip;$('exportDocZipBtn').onclick=exportZip;$('exportPdfZipBtn').onclick=exportZip;
+window.__layerSplit={unzip:unzip,zipFiles:zipFiles,splitImage:splitImage,parseOffice:parseOffice,parsePdf:parsePdf,quantize:quantize,state:state};
+setMode('image');
+})();
+</script>
+</body>
+</html>
