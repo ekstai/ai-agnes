@@ -27,9 +27,9 @@
     "path": "plugins/account-center"
   },
   {
-    "name": "图层分离",
-    "description": "把图片分离成透明图层，把 PPTX/DOCX/XLSX 拆解成内嵌图片与文本，从 PDF 提取图片；本机处理不上传，支持 ZIP 打包下载。",
-    "version": "1.0.0",
+    "name": "图片元素编辑器",
+    "description": "把图片当画布叠加文本/图片/形状，自由缩放、移动(XY)、旋转、倾斜、调Z层级、改内容，导出合成PNG。本机处理不上传。",
+    "version": "2.0.0",
     "icon": "Layers",
     "category": "tool",
     "author": "Vyrxzulqen",
