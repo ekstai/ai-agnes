@@ -1,0 +1,13 @@
+{
+  "name": "图层分离",
+  "slug": "layer-split",
+  "description": "把图片按颜色/透明度/边缘分离成多个透明图层，把 PPTX/DOCX/XLSX 拆解成内嵌图片与逐页文本，从 PDF 提取内嵌图片；全部在本机浏览器内处理，不上传文件，支持打包下载 ZIP。",
+  "category": "tool",
+  "icon": "Layers",
+  "version": "1.0.0",
+  "author": "Vyrxzulqen",
+  "keywords": ["图层", "分离", "抠图", "PPT", "文档", "PDF", "拆解", "layer"],
+  "uiHtml": "index.html",
+  "entry": "README.md",
+  "capabilities": ["ui.layerSplit"]
+}
